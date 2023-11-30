@@ -3,14 +3,13 @@ import java.time.LocalDateTime;
 
 
 public class MarketData {
-    private String loc;
     private String stockName;
     private String stockId;
     private double curPrice;
     private double absChange;
     private double perChange;
     private long dealCount;
-    private long dealAmount;
+    private double dealValue;
     private double maxPrice;
     private double minPrice;
     private double meanPrice;
@@ -22,33 +21,27 @@ public class MarketData {
 
     }
 
-    public MarketData(String loc, String stockName, String stockId, double curPrice, long fetchTime) {
-        this.loc = loc;
+    public MarketData(String stockId, double curPrice, long fetchTime) {
         this.stockId = stockId;
-        this.stockName = stockName;
         this.curPrice = curPrice;
         this.fetchTime = fetchTime;
     }
 
-    public MarketData(String loc, String stockName, String stockId, double curPrice, double absChange, double perChange,
-                      long dealCount, long dealAmount, double maxPrice, double minPrice, double meanPrice, LocalDateTime timeStamp) {
-        this.loc = loc;
+    public MarketData(String stockName, String stockId, double curPrice, double absChange, double perChange,
+                      long dealCount, double dealValue, double maxPrice, double minPrice, double meanPrice, LocalDateTime timeStamp) {
         this.stockId = stockId;
         this.stockName = stockName;
         this.curPrice = curPrice;
         this.absChange = absChange;
         this.perChange = perChange;
         this.dealCount = dealCount;
-        this.dealAmount = dealAmount;
+        this.dealValue = dealValue;
         this.maxPrice = maxPrice;
         this.minPrice = minPrice;
         this.meanPrice = meanPrice;
         this.timeStampChina = timeStamp;
     }
 
-    public void setLoc(String loc) {
-        this.loc = loc;
-    }
 
     public void setStockId(String stockId) {
         this.stockId = stockId;
@@ -60,6 +53,13 @@ public class MarketData {
 
     public void setStockPrice(double curPrice) {
         this.curPrice = curPrice;
+    }
+
+    public void setStockDealCount(long dealCount) {
+        this.dealCount = dealCount;
+    }
+    public void setStockDealValue(double dealValue) {
+        this.dealValue = dealValue;
     }
 
 

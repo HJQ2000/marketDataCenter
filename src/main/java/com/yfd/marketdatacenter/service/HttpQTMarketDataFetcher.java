@@ -1,5 +1,6 @@
 package com.yfd.marketdatacenter.service;
 import com.yfd.marketdatacenter.model.MarketData;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import java.io.BufferedReader;
@@ -8,6 +9,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,10 +25,13 @@ public class HttpQTMarketDataFetcher implements MarketDataFetcher{
 //        System.out.println("Fetching data at: " + LocalDateTime.now());
         return processData;
     }
-
+    @Override
+    public List<MarketData> fetchAndProcessOne(String stockIdWithLoc) {
+        return null;
+    }
     private List<String> stockList = new StockSymbols().getAllStockSymbols();
     @Override
-    @Scheduled(fixedRate = 30000)
+//    @Scheduled(fixedRate = 30000)
     public List<MarketData> fetchAndProcessAll() {
         List<CompletableFuture<MarketData>> futures = stockList.subList(1000, 1100).stream()
                 .map(symbol -> CompletableFuture.supplyAsync(() -> fetchAndProcessData("sh"+symbol)))
@@ -48,29 +53,7 @@ public class HttpQTMarketDataFetcher implements MarketDataFetcher{
         stockAddressMap.put("1", "sh");
     }
     private String fetchDataShortFromHttp(String stockIdWithLoc) {
-        try {
-            URL url = new URL(
-                    "https://qt.gtimg.cn/q=s_" + stockIdWithLoc);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("GET");
-            int responseCode = connection.getResponseCode();
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                BufferedReader readIn = new BufferedReader(new InputStreamReader(connection.getInputStream(), "GBK"));
-                StringBuilder response = new StringBuilder();
-                String input;
-                while ((input = readIn.readLine()) != null) {
-                    response.append(input);
-                }
-                connection.disconnect();
-                return response.toString();
-            } else {
-                return "HTTP request failed with response code: " + responseCode;
-            }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            return "Error occurred during HTTP request.";
-        }
+        return fetchDataFromHttp("https://qt.gtimg.cn/q=s_"+stockIdWithLoc, "GBK");
     }
 
     private MarketData parseAndProcessShortData(String rawData) {
@@ -81,7 +64,8 @@ public class HttpQTMarketDataFetcher implements MarketDataFetcher{
             return new MarketData();
         }
         String[] marketDataArray = content.split("~");
-
-        return new MarketData(stockAddressMap.get(marketDataArray[0]), marketDataArray[1], marketDataArray[2], Double.parseDouble(marketDataArray[3]), startTime);
+        MarketData md =  new MarketData(stockAddressMap.get(marketDataArray[0])+marketDataArray[2], Double.parseDouble(marketDataArray[3]), startTime);
+        md.setStockName(marketDataArray[1]);
+        return md;
     }
 }
