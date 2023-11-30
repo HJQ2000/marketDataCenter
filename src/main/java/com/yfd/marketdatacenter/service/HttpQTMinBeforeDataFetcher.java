@@ -1,15 +1,9 @@
 package com.yfd.marketdatacenter.service;
 
 import com.yfd.marketdatacenter.model.MarketData;
+import com.yfd.marketdatacenter.model.MarketDataMin;
 import org.json.JSONArray;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
-
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -47,9 +41,10 @@ public class HttpQTMinBeforeDataFetcher implements MarketDataFetcher {
         for(Object ele:jsonArray) {
             String[] info = ele.toString().split(" ");
             LocalDateTime dateTime = LocalDateTime.parse(date+info[0], formatter);
-            MarketData md = new MarketData(stockIdWithLoc, Double.parseDouble(info[1]), fetchTime);
-            md.setStockDealValue(Double.parseDouble(info[3]));
-            md.setStockDealCount(Long.parseLong(info[2]));
+            MarketDataMin md = new MarketDataMin(stockIdWithLoc, Double.parseDouble(info[1]), fetchTime);
+            md.setDealValue(Double.parseDouble(info[3]));
+            md.setDealCount(Long.parseLong(info[2]));
+            md.setTimeStampChina(dateTime);
             minInfo.add(md);
         }
         return minInfo;

@@ -1,6 +1,7 @@
 package com.yfd.marketdatacenter.controller;
 
 import com.yfd.marketdatacenter.model.MarketData;
+import com.yfd.marketdatacenter.model.MarketDataMin;
 import com.yfd.marketdatacenter.service.HttpQTMarketDataFetcher;
 import com.yfd.marketdatacenter.service.HttpQTMinBeforeDataFetcher;
 import com.yfd.marketdatacenter.service.MarketDataFetcher;
@@ -28,9 +29,9 @@ public class MarketController {
    @GetMapping("/market-data-requested")
    public MarketData getMarketData(@RequestParam String stockSymbols) {
        long startTime = System.currentTimeMillis();
-       MarketData md = marketDataFetcher.fetchAndProcessData(stockSymbols);
+       MarketDataMin md = (MarketDataMin)marketDataFetcher.fetchAndProcessData(stockSymbols);
        System.out.println("Milliseconds difference: " + (System.currentTimeMillis() - startTime));
-       System.out.println(md.getStockName() + ": " + md.getStockPrice());
+       System.out.println(md.getStockId() + ": " + md.getCurPrice());
        return md;
    }
 
