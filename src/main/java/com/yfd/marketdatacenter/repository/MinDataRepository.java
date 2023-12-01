@@ -6,10 +6,8 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 
-public interface minDataRepository extends JpaRepository<MarketDataMin, Integer> {
+public interface MinDataRepository extends JpaRepository<MarketDataMin, Integer> {
     @Query(value="select * from min_stock where stock_id = ?1", nativeQuery = true)
     List<MarketDataMin> getMinDataGivenStock(String stockId);
-
-
 
 }

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+</head>
+<body>
+  <h1>WebSocket Example</h1>
+  <input id="text" type="text"/>
+  <button onclick="send()">Send</button>
+  <button onclick="closeWebSocket()">Close</button>
+
+  <div id="output">
+    <p>Message Here:</p>
+  </div>
+</body>
+
+<script>
+  let socket = null;
+  if ('WebSocket' in window) {
+    socket = new WebSocket('ws://localhost:8080/websocket');
+  } else {
+    alert('当前浏览器不支持WebSocket')
+  }
+
+  socket.onopen = function(event){
+    console.log('WebSocket connection opened:', event);
+    document.getElementById('output').innerHTML += 'WebSocket connection opened <br/>';
+  };
+
+  socket.onmessage = function(event){
+    const message = event.data;
+    console.log('Received message:', message);
+    if (typeof(message)=='string') {
+      setMessageInnerHTML(message)
+    }
+  };
+
+  socket.onclose = function(event) {
+    console.log('WebSocket connection closed:', event);
+    setMessageInnerHTML('WebSocket connection closed');
+  };
+
+  function setMessageInnerHTML(innerHTML) {
+    console.log(innerHTML)
+    document.getElementById('output').innerHTML += "Message Recevied: "+ innerHTML + '<br/>';
+  }
+  function closeWebSocket() {
+    socket.close();
+  }
+
+  function send(msg) {
+    console.log("send" + msg)
+    if(!msg) {
+      msg = document.getElementById('text').value;
+      document.getElementById('output').innerHTML += "发送的消息：" + msg + '<br/>';
+      socket.send(msg);
+    }
+  }
+
+</script>
+</html>

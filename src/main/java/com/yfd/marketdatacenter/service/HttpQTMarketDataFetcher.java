@@ -1,16 +1,11 @@
 package com.yfd.marketdatacenter.service;
 import com.yfd.marketdatacenter.model.MarketData;
 import com.yfd.marketdatacenter.model.MarketDataMin;
-import org.springframework.beans.factory.annotation.Qualifier;
+import com.yfd.marketdatacenter.repository.MinDataRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,22 +14,31 @@ import java.util.stream.Collectors;
 
 @Service
 public class HttpQTMarketDataFetcher implements MarketDataFetcher{
+
+    private final List<String> stockList;
+    private final MinDataRepository rep;
+
+    @Autowired
+    public HttpQTMarketDataFetcher(MinDataRepository rep) {
+        this.rep = rep;
+        this.stockList = new StockSymbols().getAllStockSymbols();
+    }
     @Override
     public MarketData fetchAndProcessData(String stockIdWithLoc) {
         String rawData = fetchDataShortFromHttp(stockIdWithLoc);
         MarketData processData= parseAndProcessShortData(rawData);
 //        System.out.println("Fetching data at: " + LocalDateTime.now());
+//        rep.save((MarketDataMin) proce ssData);
         return processData;
     }
     @Override
     public List<MarketData> fetchAndProcessOne(String stockIdWithLoc) {
         return null;
     }
-    private List<String> stockList = new StockSymbols().getAllStockSymbols();
     @Override
 //    @Scheduled(fixedRate = 30000)
     public List<MarketData> fetchAndProcessAll() {
-        List<CompletableFuture<MarketData>> futures = stockList.subList(1000, 1100).stream()
+        List<CompletableFuture<MarketData>> futures = stockList.subList(1000, 1010).stream()
                 .map(symbol -> CompletableFuture.supplyAsync(() -> fetchAndProcessData("sh"+symbol)))
                 .collect(Collectors.toList());
 

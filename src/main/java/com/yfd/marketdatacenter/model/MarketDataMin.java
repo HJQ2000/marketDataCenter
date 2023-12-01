@@ -33,6 +33,11 @@ public class MarketDataMin extends MarketData{
         super(stockId);
         this.curPrice = curPrice;
         this.fetchTime = fetchTime;
+        this.absChange = (double) 0;
+        this.perChange = (double) 0;
+        this.dealCount = 0L;
+        this.dealValue = (double) 0;
+        this.meanPrice = (double) 0;
     }
 
     public MarketDataMin(String stockId, double curPrice, double absChange, double perChange,

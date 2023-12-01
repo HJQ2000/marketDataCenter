@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+</head>
+<body>
+<h1>WebSocket & Chart</h1>
+<input type="text" id="stockInput" placeholder="Enter Stock Symbol">
+<button onclick="connectWebSocket()">Connect WebSocket</button>
+<button onclick="closeWebSocket()">Close</button>
+
+<div id="output">
+  <p>Message Here:</p>
+</div>
+</body>
+
+<script>
+  let socket = null;
+
+  function setMessageInnerHTML(place, info) {
+    console.log(info)
+    place.innerHTML += info + '<br/>';
+  }
+  function connectWebSocket() {
+    const stockInput = document.getElementById('stockInput');
+    const outputDiv = document.getElementById('output');
+
+    if ('WebSocket' in window) {
+      socket = new WebSocket('ws://localhost:8080/websocket');
+    } else {
+      alert('当前浏览器不支持WebSocket');
+      return;
+    }
+
+    // 连接建立时的处理
+    socket.onopen = (event) => {
+      setMessageInnerHTML(outputDiv, 'WebSocket Connection Established');
+      const stockSymbol = stockInput.value;
+      socket.send(stockSymbol);
+    };
+
+    // 接收后端推送的消息
+    socket.onmessage = (event) => {
+      const stockData = event.data;
+      setMessageInnerHTML(outputDiv, 'Received Stock Data: ' + stockData);
+    };
+
+    // 处理连接关闭
+    socket.onclose = (event) => {
+      setMessageInnerHTML(outputDiv, 'WebSocket Connection Closed');
+    };
+
+    // 处理错误
+    socket.onerror = (event) => {
+      setMessageInnerHTML(outputDiv, 'WebSocket Error');
+    };
+  }
+
+  function closeWebSocket() {
+    socket.close();
+  }
+
+
+</script>
+</html>

@@ -4,15 +4,13 @@ import com.yfd.marketdatacenter.model.MarketDataMin;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.domain.PageRequest;
 
-import java.awt.print.Pageable;
 import java.util.List;
 
 @SpringBootTest
 public class JpaTests {
     @Autowired
-    private minDataRepository repository;
+    private MinDataRepository repository;
 
     @Test
     public void getMinDataGivenStock() {

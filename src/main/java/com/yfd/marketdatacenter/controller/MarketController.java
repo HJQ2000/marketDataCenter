@@ -2,6 +2,7 @@ package com.yfd.marketdatacenter.controller;
 
 import com.yfd.marketdatacenter.model.MarketData;
 import com.yfd.marketdatacenter.model.MarketDataMin;
+import com.yfd.marketdatacenter.repository.MinDataRepository;
 import com.yfd.marketdatacenter.service.HttpQTMarketDataFetcher;
 import com.yfd.marketdatacenter.service.HttpQTMinBeforeDataFetcher;
 import com.yfd.marketdatacenter.service.MarketDataFetcher;
@@ -24,7 +25,8 @@ public class MarketController {
     }
 
 
-   private MarketDataFetcher marketDataFetcher = new HttpQTMarketDataFetcher();
+    @Autowired
+   private HttpQTMarketDataFetcher marketDataFetcher;
 
    @GetMapping("/market-data-requested")
    public MarketData getMarketData(@RequestParam String stockSymbols) {
@@ -42,12 +44,12 @@ public class MarketController {
         System.out.println("Concurrent Time Cost(ms): " + (System.currentTimeMillis() - startTime)); //concurrent data fetcher for 20 stock takes about 2s，但是2000个还是要200s左右
         return result;
     }
-
-    private MarketDataFetcher minBeforeDatFetcher = new HttpQTMinBeforeDataFetcher();
+    @Autowired
+    private HttpQTMinBeforeDataFetcher minBeforeDataFetcher;
     @GetMapping("/min-before")
     public List<MarketData> getMinBeforeData(@RequestParam String stockSymbols) {
         long startTime = System.currentTimeMillis();
-        List<MarketData> mdList = minBeforeDatFetcher.fetchAndProcessOne(stockSymbols);
+        List<MarketData> mdList = minBeforeDataFetcher.fetchAndProcessOne(stockSymbols);
         System.out.println("Milliseconds difference: " + (System.currentTimeMillis() - startTime));
         return mdList;
     }
