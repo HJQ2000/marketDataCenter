@@ -6,60 +6,107 @@
 </head>
 <body>
 <h1>WebSocket & Chart</h1>
-<input type="text" id="stockInput" placeholder="Enter Stock Symbol">
-<button onclick="connectWebSocket()">Connect WebSocket</button>
-<button onclick="closeWebSocket()">Close</button>
-
+<form id="stockForm">
+  <input type="text" id="stockCodeInput" placeholder="Enter Stock Symbol">
+  <button type="submit">Submit</button>
+</form>
 <div id="output">
   <p>Message Here:</p>
 </div>
+
+<canvas id="stockChart" width="800" height="400"></canvas>
+
 </body>
-
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.0/dist/sockjs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  let socket = null;
 
-  function setMessageInnerHTML(place, info) {
-    console.log(info)
-    place.innerHTML += info + '<br/>';
-  }
-  function connectWebSocket() {
-    const stockInput = document.getElementById('stockInput');
-    const outputDiv = document.getElementById('output');
+  let stompClient = null;
+  let stockData;
+  const socket = new SockJS('/websocket');
+  stompClient = Stomp.over(socket);
+  stompClient.connect({}, function (frame) {
+    console.log('Connected: ' + frame);
 
-    if ('WebSocket' in window) {
-      socket = new WebSocket('ws://localhost:8080/websocket');
-    } else {
-      alert('当前浏览器不支持WebSocket');
-      return;
-    }
+    // 提交表单时获取输入的股票号
+    document.getElementById('stockForm').addEventListener('submit', function (event) {
+      event.preventDefault();
+      const stockCodeInput = document.getElementById('stockCodeInput').value;
 
-    // 连接建立时的处理
-    socket.onopen = (event) => {
-      setMessageInnerHTML(outputDiv, 'WebSocket Connection Established');
-      const stockSymbol = stockInput.value;
-      socket.send(stockSymbol);
-    };
+      // 发送股票号到后端
+      stompClient.send('/app/stock', {}, stockCodeInput);
+    });
 
-    // 接收后端推送的消息
-    socket.onmessage = (event) => {
-      const stockData = event.data;
-      setMessageInnerHTML(outputDiv, 'Received Stock Data: ' + stockData);
-    };
+    // 订阅股票数据
+    stompClient.subscribe('/topic/stockData', function (message) {
+      stockData = JSON.parse(message.body);
+      // 在这里处理从后端获取的股票数据
 
-    // 处理连接关闭
-    socket.onclose = (event) => {
-      setMessageInnerHTML(outputDiv, 'WebSocket Connection Closed');
-    };
+      const ctx = document.getElementById('stockChart').getContext('2d');
+      const stockChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: stockData.map(data => data.timeStampChina.slice(11, -3)),
+          datasets: [{
+            label: 'Stock Price',
+            borderColor: 'blue',
+            borderWidth: 2,
+            data: stockData.map(data => data.curPrice),
+            fill: false,
+          }],
+        },
+        options: {
+          responsive: false,
+          aspectRatio: 1,
+          plugins:{
+            tooltip: {
+              intersect: false,
+              mode: 'index',
+              callbacks: {
+                label: function (context) {
+                  let label = context.dataset.label || '';
+                  if (label) {
+                    label += ': ';
+                  }
+                  label += context.parsed.y;
+                  return label;
+                },
+              },
+            },
+          },
+          elements: {
+            point: {
+              radius: 2, // 设置数据点的大小
+            },
+          },
+          // scales: {
+          //   x: {
+          //     type: 'linear',
+          //     ticks: {
+          //       min: '09:30',
+          //       max: '15:00',
+          //     },
+          //   },
+          //   y: {
+          //     ticks: {
+          //       beginAtZero: false,
+          //     },
+          //   },
+          // },
+        },
+      });
 
-    // 处理错误
-    socket.onerror = (event) => {
-      setMessageInnerHTML(outputDiv, 'WebSocket Error');
-    };
-  }
+    });
 
-  function closeWebSocket() {
-    socket.close();
-  }
+    stompClient.subscribe('/topic/stockData/sh600519', function (message) {
+      const data = JSON.parse(message.body);
+      console.log(data);
+      document.getElementById("output").innerHTML += data.curPrice;
+    });
+
+  });
 
 
 </script>

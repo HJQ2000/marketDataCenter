@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.json.JSONObject;
 import org.json.JSONTokener;
-@Service
+@Service("minBeforeData")
 public class HttpQTMinBeforeDataFetcher implements MarketDataFetcher {
     @Override
     public MarketData fetchAndProcessData(String stockSymbol) {

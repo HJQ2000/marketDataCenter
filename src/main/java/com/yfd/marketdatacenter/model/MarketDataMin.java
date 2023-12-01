@@ -38,6 +38,7 @@ public class MarketDataMin extends MarketData{
         this.dealCount = 0L;
         this.dealValue = (double) 0;
         this.meanPrice = (double) 0;
+        this.timeStampChina = LocalDateTime.now();
     }
 
     public MarketDataMin(String stockId, double curPrice, double absChange, double perChange,

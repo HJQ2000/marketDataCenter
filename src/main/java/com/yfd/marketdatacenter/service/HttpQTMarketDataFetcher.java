@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-@Service
+@Service("oneMinData")
 public class HttpQTMarketDataFetcher implements MarketDataFetcher{
 
     private final List<String> stockList;
