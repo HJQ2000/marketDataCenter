@@ -13,6 +13,8 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 @Controller
 public class WebSocketController {
@@ -34,6 +36,8 @@ public class WebSocketController {
     @Autowired
     @Qualifier("oneMinData")
     private MarketDataFetcher marketDataFetcherCur;
+    ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
     private void simulateAdd(String stockSymbol) {
         Timer timer = new Timer();
         timer.scheduleAtFixedRate(new TimerTask() {
@@ -47,6 +51,5 @@ public class WebSocketController {
             }
         }, 0, 10000);
     }
-
 
 }

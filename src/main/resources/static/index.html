@@ -21,10 +21,105 @@
 <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.0/dist/sockjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
 <script>
 
+  let stockData = [];
+  let label = generateTimeLabels();
+  function generateTimeLabels() {
+    const labels = [];
+    const morningStartTime = new Date("2023-01-01T09:30:00");
+    const morningEndTime = new Date("2023-01-01T11:30:00");
+    const afternoonStartTime = new Date("2023-01-01T13:00:00");
+    const afternoonEndTime = new Date("2023-01-01T15:00:00");
+
+    let currentTime = new Date(morningStartTime);
+
+    while (currentTime <= morningEndTime) {
+      labels.push(currentTime.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }));
+      currentTime.setMinutes(currentTime.getMinutes() + 1);
+    }
+
+    currentTime = new Date(afternoonStartTime);
+
+    while (currentTime <= afternoonEndTime) {
+      labels.push(currentTime.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }));
+      currentTime.setMinutes(currentTime.getMinutes() + 1);
+    }
+
+    return labels;
+  }
+
+  const ctx = document.getElementById('stockChart').getContext('2d');
+  const config = {
+    type: 'line',
+    data: {
+      labels: label,
+      datasets: [{
+        label: 'Stock Price',
+        borderColor: 'blue',
+        borderWidth: 2,
+        data: stockData,
+        fill: false,
+      }],
+    },
+    options: {
+      responsive: false,
+      plugins: {
+        tooltip: {
+          mode: 'index',
+          intersect: false
+        },
+        title: {
+          display: true,
+          text: '股票分时图'
+        }
+      },
+      hover: {
+        mode: 'index',
+        intersect: false
+      },
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: 'Time'
+          },
+          grid: {
+            display: false,
+          },
+          ticks:{
+            autoSkip: false,
+            callback: function(val, index) {
+              return index % 30 === 0 ? this.getLabelForValue(val) : '';
+            },
+
+          },
+        },
+        y: {
+          title: {
+            display: true,
+            text: 'Price'
+          },
+          suggestedMin: 1740,
+          suggestedMax: 1800,
+          ticks: {
+            // forces step size to be 50 units
+            stepSize: 2
+          }
+        }
+      },
+      elements: {
+        point: {
+          radius: 1, // 设置数据点的大小
+        },
+      },
+    },
+  };
+
+  const stockChart = new Chart(ctx, config);
+
   let stompClient = null;
-  let stockData;
   const socket = new SockJS('/websocket');
   stompClient = Stomp.over(socket);
   stompClient.connect({}, function (frame) {
@@ -41,70 +136,23 @@
 
     // 订阅股票数据
     stompClient.subscribe('/topic/stockData', function (message) {
-      stockData = JSON.parse(message.body);
+      const data = JSON.parse(message.body);
       // 在这里处理从后端获取的股票数据
-
-      const ctx = document.getElementById('stockChart').getContext('2d');
-      const stockChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: stockData.map(data => data.timeStampChina.slice(11, -3)),
-          datasets: [{
-            label: 'Stock Price',
-            borderColor: 'blue',
-            borderWidth: 2,
-            data: stockData.map(data => data.curPrice),
-            fill: false,
-          }],
-        },
-        options: {
-          responsive: false,
-          aspectRatio: 1,
-          plugins:{
-            tooltip: {
-              intersect: false,
-              mode: 'index',
-              callbacks: {
-                label: function (context) {
-                  let label = context.dataset.label || '';
-                  if (label) {
-                    label += ': ';
-                  }
-                  label += context.parsed.y;
-                  return label;
-                },
-              },
-            },
-          },
-          elements: {
-            point: {
-              radius: 2, // 设置数据点的大小
-            },
-          },
-          // scales: {
-          //   x: {
-          //     type: 'linear',
-          //     ticks: {
-          //       min: '09:30',
-          //       max: '15:00',
-          //     },
-          //   },
-          //   y: {
-          //     ticks: {
-          //       beginAtZero: false,
-          //     },
-          //   },
-          // },
-        },
-      });
-
+      // labels = stockData.map(data => data.timeStampChina.slice(11, -3));
+      stockData = data.map(data => data.curPrice);
+      stockChart.data.datasets[0].data = stockData;
+      stockChart.update();
     });
 
     stompClient.subscribe('/topic/stockData/sh600519', function (message) {
-      const data = JSON.parse(message.body);
-      console.log(data);
-      document.getElementById("output").innerHTML += data.curPrice;
+      const newdata = JSON.parse(message.body);
+      console.log(newdata);
+      document.getElementById("output").innerHTML += newdata.curPrice;
+      stockData.push(newdata.curPrice)
+      stockChart.data.datasets[0].data = stockData;
+      stockChart.update();
     });
+
 
   });
 
