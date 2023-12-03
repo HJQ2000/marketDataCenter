@@ -132,26 +132,30 @@
 
       // 发送股票号到后端
       stompClient.send('/app/stock', {}, stockCodeInput);
+      // 订阅股票数据
+      stompClient.subscribe('/topic/initialStockData', function (message) {
+        const data = JSON.parse(message.body);
+        // 在这里处理从后端获取的股票数据
+        // labels = stockData.map(data => data.timeStampChina.slice(11, -3));
+        stockData = data.map(data => data.curPrice);
+        stockChart.data.datasets[0].data = stockData;
+        stockChart.update();
+        console.log(stockData.length);
+        console.log("should initially update")
+      });
+
+      stompClient.subscribe('/topic/updatedStockData/'+stockCodeInput, function (message) {
+        const newdata = JSON.parse(message.body);
+        console.log(newdata);
+        document.getElementById("output").innerHTML += newdata.curPrice;
+        stockData.push(newdata.curPrice)
+        stockChart.data.datasets[0].data = stockData;
+        stockChart.update();
+        console.log(stockData.length);
+      });
     });
 
-    // 订阅股票数据
-    stompClient.subscribe('/topic/stockData', function (message) {
-      const data = JSON.parse(message.body);
-      // 在这里处理从后端获取的股票数据
-      // labels = stockData.map(data => data.timeStampChina.slice(11, -3));
-      stockData = data.map(data => data.curPrice);
-      stockChart.data.datasets[0].data = stockData;
-      stockChart.update();
-    });
 
-    stompClient.subscribe('/topic/stockData/sh600519', function (message) {
-      const newdata = JSON.parse(message.body);
-      console.log(newdata);
-      document.getElementById("output").innerHTML += newdata.curPrice;
-      stockData.push(newdata.curPrice)
-      stockChart.data.datasets[0].data = stockData;
-      stockChart.update();
-    });
 
 
   });

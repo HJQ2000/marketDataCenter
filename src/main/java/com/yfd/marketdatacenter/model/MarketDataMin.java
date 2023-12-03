@@ -29,7 +29,7 @@ public class MarketDataMin extends MarketData{
 
     }
 
-    public MarketDataMin(String stockId, double curPrice, long fetchTime) {
+    public MarketDataMin(String stockId, double curPrice, long fetchTime, LocalDateTime time) {
         super(stockId);
         this.curPrice = curPrice;
         this.fetchTime = fetchTime;
@@ -38,7 +38,7 @@ public class MarketDataMin extends MarketData{
         this.dealCount = 0L;
         this.dealValue = (double) 0;
         this.meanPrice = (double) 0;
-        this.timeStampChina = LocalDateTime.now();
+        this.timeStampChina = time;
     }
 
     public MarketDataMin(String stockId, double curPrice, double absChange, double perChange,

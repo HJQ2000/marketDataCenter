@@ -2,7 +2,9 @@ package com.yfd.marketdatacenter.service;
 
 import com.yfd.marketdatacenter.model.MarketData;
 import com.yfd.marketdatacenter.model.MarketDataMin;
+import com.yfd.marketdatacenter.repository.MinDataRepository;
 import org.json.JSONArray;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -12,6 +14,13 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 @Service("minBeforeData")
 public class HttpQTMinBeforeDataFetcher implements MarketDataFetcher {
+
+    private final MinDataRepository rep;
+
+    @Autowired
+    public HttpQTMinBeforeDataFetcher(MinDataRepository rep) {
+        this.rep = rep;
+    }
     @Override
     public MarketData fetchAndProcessData(String stockSymbol) {
         return null;
@@ -41,11 +50,14 @@ public class HttpQTMinBeforeDataFetcher implements MarketDataFetcher {
         for(Object ele:jsonArray) {
             String[] info = ele.toString().split(" ");
             LocalDateTime dateTime = LocalDateTime.parse(date+info[0], formatter);
-            MarketDataMin md = new MarketDataMin(stockIdWithLoc, Double.parseDouble(info[1]), fetchTime);
+            MarketDataMin md = new MarketDataMin(stockIdWithLoc, Double.parseDouble(info[1]), fetchTime, dateTime);
             md.setDealValue(Double.parseDouble(info[3]));
             md.setDealCount(Long.parseLong(info[2]));
-            md.setTimeStampChina(dateTime);
             minInfo.add(md);
+            List<MarketDataMin> existing = rep.findByStockIdAndTimeStamp(md.getStockId(), md.getTimeStampChina());
+            if(existing == null || existing.size()==0){
+                rep.save(md);
+            }
         }
         return minInfo;
     }
