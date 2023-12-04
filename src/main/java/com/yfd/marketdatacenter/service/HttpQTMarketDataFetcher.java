@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yfd.marketdatacenter.model.MarketData;
 import com.yfd.marketdatacenter.model.MarketDataMin;
 import com.yfd.marketdatacenter.model.Stock;
-import com.yfd.marketdatacenter.repository.MinDataRepository;
 import com.yfd.marketdatacenter.controller.WebSocketController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -13,27 +12,19 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service("oneMinData")
-public class HttpQTMarketDataFetcher implements MarketDataFetcher{
-    private final RepositoryService repositoryService;
-    private final ObjectMapper objectMapper;
-    private final RedisTemplate<String, String> redisTemplate;
+public class HttpQTMarketDataFetcher extends MarketDataFetcher{
     private final SubscriptionService subscriptionService;
     private final WebSocketController webSocketController;
 
     @Autowired
     public HttpQTMarketDataFetcher(RepositoryService repositoryService, RedisTemplate<String, String> redisTemplate, ObjectMapper objectMapper,
                                    SubscriptionService subscriptionService, WebSocketController webSocketController) {
-        this.repositoryService = repositoryService;
-        this.redisTemplate = redisTemplate;
-        this.objectMapper = objectMapper;
+        super(repositoryService, redisTemplate, objectMapper);
         this.subscriptionService = subscriptionService;
         this.webSocketController = webSocketController;
     }
@@ -51,7 +42,7 @@ public class HttpQTMarketDataFetcher implements MarketDataFetcher{
                 System.out.println("webSocket sending error catched");
             }
         }
-//        saveToRedis(processData);
+        saveToRedis(processData);
 //        saveToMySQLAsync(processData);
         return processData;
     }
@@ -84,25 +75,50 @@ public MarketData getOneForPastMinute(String stockIdWithLoc) {
         long oneMinuteAgo = currentTime - 60 * 1000;
         Set<String> dataList = redisTemplate.opsForZSet().rangeByScore(stockIdWithLoc, oneMinuteAgo, currentTime);
         double sumPrice = 0;
-        double sumDealCount = 0;
+        long sumDealCount = 0;
         double sumDealValue = 0;
+        System.out.println(dataList);
         int count = 0;
         for (String data : dataList) {
             try {
-                MarketDataMin marketData = (MarketDataMin)objectMapper.readValue(data, MarketData.class);
+                MarketDataMin marketData = (MarketDataMin)objectMapper.readValue(data, MarketDataMin.class);
                 sumPrice += marketData.getCurPrice();
-                sumDealValue += marketData.getDealValue();
-                sumDealCount += marketData.getDealCount();
+                sumDealValue = marketData.getDealValue();
+                sumDealCount = marketData.getDealCount();
                 count++;
             } catch (JsonProcessingException e) {
                 // 处理异常
                 e.printStackTrace();
             }
         }
-        if(count < 0) {
+        if(count <= 0) {
             return new MarketDataMin();
         }
         MarketDataMin marketData = new MarketDataMin(stockIdWithLoc, sumPrice / count,  oneMinuteAgo, LocalDateTime.now());
+        marketData.setDealCount(sumDealCount);
+        marketData.setDealValue(sumDealValue);
+        if (marketData != null) {
+            try{
+                System.out.println(marketData);
+
+                webSocketController.sendContMarketPerMinDataToWebSocket(stockIdWithLoc, marketData);
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.out.println("webSocket sending error catched");
+            }
+
+//            try {
+//                String value = objectMapper.writeValueAsString(marketData);
+//                int hour = dateTime.getHour();
+//                int minute = dateTime.getMinute();
+//                int score = hour * 100 + minute;
+//                String key = marketData.getStockId()+"_min";
+//                redisTemplate.opsForZSet().add(key, value, score);
+//            } catch (JsonProcessingException e) {
+//                e.printStackTrace();
+//            }
+//            System.out.println("Saving to Redis: " + marketData);
+        }
         return marketData;
     }
     @Override
@@ -112,7 +128,7 @@ public MarketData getOneForPastMinute(String stockIdWithLoc) {
     @Override
 //    @Scheduled(fixedRate = 30000)
     public List<MarketData> fetchAndProcessAll() {
-        List<CompletableFuture<MarketData>> futures = subscriptionService.getAllStockCodes().subList(1000, 1010).stream()
+        List<CompletableFuture<MarketData>> futures = subscriptionService.getSubscribedStockCodes().stream()
                 .map(symbol -> CompletableFuture.supplyAsync(() -> fetchAndProcessData("sh"+symbol)))
                 .collect(Collectors.toList());
 
@@ -126,6 +142,18 @@ public MarketData getOneForPastMinute(String stockIdWithLoc) {
         return result;
     }
 
+    @Override
+    public String getName(String stockSymbol){
+        String stockName = redisTemplate.opsForValue().get(stockSymbol + "_name");
+        if (stockName == null) {
+            Optional<Stock> stock = repositoryService.findStock(stockSymbol);
+            if (!stock.isEmpty()) {
+                stockName = stock.get().getStockName();
+                redisTemplate.opsForValue().set(stockSymbol + "_name", stockName);
+            }
+        }
+        return stockName;
+    }
     private static final Map<String, String> stockAddressMap = new HashMap<>();
     static {
         stockAddressMap.put("51", "sz");
@@ -157,10 +185,10 @@ public MarketData getOneForPastMinute(String stockIdWithLoc) {
             e.printStackTrace();
         }
 
-        if(repositoryService.findStock(stockSymbols).isEmpty()) {
-            Stock stock = new Stock(stockSymbols, marketDataArray[1]);
-            repositoryService.save(stock);
-        }
+//        if(repositoryService.findStock(stockSymbols).isEmpty()) {
+//            Stock stock = new Stock(stockSymbols, marketDataArray[1]);
+//            repositoryService.save(stock);
+//        }
         return md;
     }
 

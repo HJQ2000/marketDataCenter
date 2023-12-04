@@ -27,7 +27,7 @@ public class SchedulerConfig {
         this.marketDataFetcher = marketDataFetcher;
     }
 
-//    @Scheduled(cron="*/20 * * * * *")
+    @Scheduled(cron="*/20 * * * * *")
     public void scheduledFetch() {
         Set<String> subscriptions = subscriptionService.getSubscribedStockCodes();
         System.out.println(subscriptions);
@@ -35,9 +35,11 @@ public class SchedulerConfig {
             marketDataFetcher.fetchAndProcessData(stockCode);
             System.out.println("Scheduled fetching for stock: " + stockCode);
         }
+//        marketDataFetcher.fetchAndProcessAll();
+
     }
 
-//    @Scheduled(cron="0 * * * * *")
+    @Scheduled(cron="*/30 * * * * *")
     public void scheduledCalculate() {
         Set<String> subscriptions = subscriptionService.getSubscribedStockCodes();
         System.out.println(subscriptions);

@@ -1,6 +1,11 @@
 package com.yfd.marketdatacenter.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.yfd.marketdatacenter.controller.WebSocketController;
 import com.yfd.marketdatacenter.model.MarketData;
+import com.yfd.marketdatacenter.model.Stock;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -8,13 +13,38 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
+import java.util.Optional;
 
-public interface MarketDataFetcher {
-    MarketData fetchAndProcessData(String stockSymbol);
-    List<MarketData> fetchAndProcessOne(String stockSymbol);
-    List<MarketData> fetchAndProcessAll();
+public abstract class MarketDataFetcher {
 
-    default String fetchDataFromHttp(String urlString, String charSet) {
+    protected final RepositoryService repositoryService;
+    protected final RedisTemplate<String, String> redisTemplate;
+    protected final ObjectMapper objectMapper;
+
+    @Autowired
+    public MarketDataFetcher(RepositoryService repositoryService, RedisTemplate<String, String> redisTemplate, ObjectMapper objectMapper) {
+        this.repositoryService = repositoryService;
+        this.redisTemplate = redisTemplate;
+        this.objectMapper = objectMapper;
+    }
+
+    public abstract MarketData fetchAndProcessData(String stockSymbol);
+    public abstract  List<MarketData> fetchAndProcessOne(String stockSymbol);
+    public abstract List<MarketData> fetchAndProcessAll();
+
+    public String getName(String stockSymbol){
+        String stockName = redisTemplate.opsForValue().get(stockSymbol + "_name");
+        if (stockName == null) {
+            Optional<Stock> stock = repositoryService.findStock(stockSymbol);
+            if (!stock.isEmpty()) {
+                stockName = stock.get().getStockName();
+                redisTemplate.opsForValue().set(stockSymbol + "_name", stockName);
+            }
+        }
+        return stockName;
+    }
+
+    public String fetchDataFromHttp(String urlString, String charSet) {
         try {
             URL url = new URL(urlString);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();

@@ -9,35 +9,30 @@ public class MarketDataMin extends MarketData{
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     @Column(name = "cur_price")
-    private double curPrice;
+    private double curPrice=0.0;
     @Column(name = "abs_change")
-    private Double absChange;
+    private Double absChange=0.0;
     @Column(name = "per_change")
-    private Double perChange;
+    private Double perChange=0.0;
     @Column(name = "deal_count")
-    private Long dealCount;
+    private Long dealCount = 0L;
     @Column(name = "deal_value")
-    private Double dealValue;
+    private Double dealValue = 0.0;
     @Column(name = "mean_price")
-    private Double meanPrice;
+    private Double meanPrice = 0.0;
     @Column(name = "fetch_time")
     private Long fetchTime;
     @Column(name = "timestamp_china")
     private LocalDateTime timeStampChina;
 
     public MarketDataMin() {
-
+        super();
     }
 
     public MarketDataMin(String stockId, double curPrice, long fetchTime, LocalDateTime time) {
         super(stockId);
         this.curPrice = curPrice;
         this.fetchTime = fetchTime;
-        this.absChange = (double) 0;
-        this.perChange = (double) 0;
-        this.dealCount = 0L;
-        this.dealValue = (double) 0;
-        this.meanPrice = (double) 0;
         this.timeStampChina = time;
     }
 
