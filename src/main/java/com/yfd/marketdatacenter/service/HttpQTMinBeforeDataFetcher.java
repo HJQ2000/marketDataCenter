@@ -16,10 +16,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -40,7 +37,7 @@ public class HttpQTMinBeforeDataFetcher extends MarketDataFetcher {
 //        LocalDateTime dateTime = LocalDateTime.now();
 //        int hour = dateTime.getHour();
 //        int minute = dateTime.getMinute();
-//        Set<String> dataList = redisTemplate.opsForZSet().rangeByScore(stockSymbol+"_min", 900, hour * 100 + minute);
+//        Set<String> dataList = redisTemplate.opsForZSet().rangeByScore(stockSymbol+"_min"+dateTime.getDayOfYear(), 930, hour * 100 + minute);
 //        List<MarketData> result = new ArrayList<>();
 //        for (String data : dataList) {
 //            try {
@@ -59,6 +56,7 @@ public class HttpQTMinBeforeDataFetcher extends MarketDataFetcher {
         return null;
     }
 
+
     private List<MarketData> fetchAndParseDataFromHttp(String stockIdWithLoc) {
         long fetchTime = System.currentTimeMillis();
         String response = fetchDataFromHttp("https://web.ifzq.gtimg.cn/appstock/app/minute/query?code="+stockIdWithLoc, "GBK");
@@ -71,6 +69,10 @@ public class HttpQTMinBeforeDataFetcher extends MarketDataFetcher {
         List<MarketData> minInfo = new ArrayList<>();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
 
+        MarketDataMin start = new MarketDataMin();
+        double sumPrice = 0;
+        int count = 0;
+
         for(Object ele:jsonArray) {
             String[] info = ele.toString().split(" ");
             LocalDateTime dateTime = LocalDateTime.parse(date+info[0], formatter);
@@ -78,6 +80,17 @@ public class HttpQTMinBeforeDataFetcher extends MarketDataFetcher {
             md.setDealValue(Double.parseDouble(info[3]));
             md.setDealCount(Long.parseLong(info[2]));
             minInfo.add(md);
+            sumPrice += md.getCurPrice();
+            count += 1;
+            if (info[0].equals("0930")) {
+                md.setMeanPrice(sumPrice / count);
+                start = md;
+            } else {
+                md.setAbsChange(md.getCurPrice() - start.getCurPrice());
+                md.setPerChange(md.getAbsChange() / start.getCurPrice());
+                md.setMeanPrice(sumPrice / count);
+            }
+
             List<MarketDataMin> existing = repositoryService.findByStockIdAndTimeStamp(md.getStockId(), md.getTimeStampChina());
             if(existing == null || existing.size()==0){
                 repositoryService.save(md);

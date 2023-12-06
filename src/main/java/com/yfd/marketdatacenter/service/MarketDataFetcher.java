@@ -1,19 +1,24 @@
 package com.yfd.marketdatacenter.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yfd.marketdatacenter.controller.WebSocketController;
 import com.yfd.marketdatacenter.model.MarketData;
+import com.yfd.marketdatacenter.model.MarketDataMin;
 import com.yfd.marketdatacenter.model.Stock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.yaml.snakeyaml.error.Mark;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public abstract class MarketDataFetcher {
 
@@ -39,6 +44,8 @@ public abstract class MarketDataFetcher {
             if (!stock.isEmpty()) {
                 stockName = stock.get().getStockName();
                 redisTemplate.opsForValue().set(stockSymbol + "_name", stockName);
+            } else {
+                return "Stock Not Found, 检查输入股票号码";
             }
         }
         return stockName;
@@ -68,5 +75,7 @@ public abstract class MarketDataFetcher {
             return "Error occurred during HTTP request.";
         }
     }
+
+
 
 }

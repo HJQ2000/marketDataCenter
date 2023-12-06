@@ -12,6 +12,8 @@ public interface MinDataRepository extends JpaRepository<MarketDataMin, Integer>
     List<MarketDataMin> findByStockId(String stockId);
     @Query(value="select * from min_stock where stock_id = ?1 and timestamp_china = ?2", nativeQuery = true)
     List<MarketDataMin> findByStockIdAndTimeStamp(String stockId, LocalDateTime timeStamp);
+    @Query(value="select * from min_stock where stock_id = ?1 and fetch_time >= ?2 and fetch_time <= ?3", nativeQuery = true)
+    List<MarketDataMin> findByStockIdAndTimeRange(String stockId, long startTime, long endTime);
 
 }
 

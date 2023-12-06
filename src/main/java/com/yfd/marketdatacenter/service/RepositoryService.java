@@ -30,6 +30,10 @@ public class RepositoryService {
         return minDataRepository.findByStockIdAndTimeStamp(stockId, timeStamp);
     }
 
+    public List<MarketDataMin> findByStockIdAndTimeRange(String stockId, long start, long end) {
+        return minDataRepository.findByStockIdAndTimeRange(stockId, start, end);
+    }
+
     public Optional<Stock> findStock(String stockId) {
         return stockRepository.findById(stockId);
     }
@@ -40,5 +44,9 @@ public class RepositoryService {
 
     public void save(MarketDataMin marketDataMin) {
         minDataRepository.save(marketDataMin);
+    }
+
+    public void saveAll(List<MarketDataMin> mdList) {
+        minDataRepository.saveAll(mdList);
     }
 }

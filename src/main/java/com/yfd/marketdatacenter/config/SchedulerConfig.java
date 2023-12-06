@@ -10,6 +10,7 @@ import org.springframework.scheduling.annotation.SchedulingConfigurer;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 
+import java.time.LocalTime;
 import java.util.Set;
 
 @Configuration
@@ -27,25 +28,39 @@ public class SchedulerConfig {
         this.marketDataFetcher = marketDataFetcher;
     }
 
-    @Scheduled(cron="*/20 * * * * *")
-    public void scheduledFetch() {
-        Set<String> subscriptions = subscriptionService.getSubscribedStockCodes();
-        System.out.println(subscriptions);
-        for (String stockCode : subscriptions) {
-            marketDataFetcher.fetchAndProcessData(stockCode);
-            System.out.println("Scheduled fetching for stock: " + stockCode);
+    private boolean checkTime() {
+        LocalTime currentTime = LocalTime.now();
+        if ((currentTime.isAfter(LocalTime.of(13, 00)) && currentTime.isBefore(LocalTime.of(15, 01)))
+                        || (currentTime.isAfter(LocalTime.of(9, 30)) && currentTime.isBefore(LocalTime.of(11, 31)))) {
+            System.out.println("Executing scheduled task at " + currentTime);
+            return true;
+        } else {
+            System.out.println("Skipped scheduled task at " + currentTime);
+            return false;
         }
-//        marketDataFetcher.fetchAndProcessAll();
 
     }
+//    @Scheduled(cron="*/20 * * * * *")
+    @Scheduled(cron = "*/5 * 9-15 ? * MON-FRI")
+    public void scheduledFetch() {
+        if (checkTime()) {
+//            Set<String> subscriptions = subscriptionService.getSubscribedStockCodes();
+//            for (String stockCode : subscriptions) {
+//                marketDataFetcher.fetchAndProcessData(stockCode);
+//                System.out.println("Scheduled fetching for stock: " + stockCode);
+//            }
+        marketDataFetcher.fetchAndProcessSubscribed();
+        }
+    }
 
-    @Scheduled(cron="*/30 * * * * *")
+    @Scheduled(cron = "0 * 9-15 ? * MON-FRI")
     public void scheduledCalculate() {
         Set<String> subscriptions = subscriptionService.getSubscribedStockCodes();
-        System.out.println(subscriptions);
-        for (String stockCode : subscriptions) {
-            marketDataFetcher.getOneForPastMinute(stockCode);
-            System.out.println("Scheduled Per minute Calculation for stock: " + stockCode);
+        if(checkTime()) {
+            for (String stockCode : subscriptions) {
+                marketDataFetcher.getOneForPastMinute(stockCode);
+                System.out.println("Scheduled Per minute Calculation for stock: " + stockCode);
+            }
         }
     }
 

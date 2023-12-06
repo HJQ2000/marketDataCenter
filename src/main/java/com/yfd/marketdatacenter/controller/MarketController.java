@@ -6,6 +6,7 @@ import com.yfd.marketdatacenter.repository.MinDataRepository;
 import com.yfd.marketdatacenter.service.HttpQTMarketDataFetcher;
 import com.yfd.marketdatacenter.service.HttpQTMinBeforeDataFetcher;
 import com.yfd.marketdatacenter.service.MarketDataFetcher;
+import com.yfd.marketdatacenter.service.RepositoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -14,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 
 @RestController
@@ -37,11 +40,21 @@ public class MarketController {
        return md;
    }
 
+
     @GetMapping("/market-data-concurrent")
     public List<MarketData> getMarketDataConcurrent() {
         long startTime = System.currentTimeMillis();
         List<MarketData> result = marketDataFetcher.fetchAndProcessAll();
-        System.out.println("Concurrent Time Cost(ms): " + (System.currentTimeMillis() - startTime)); //concurrent data fetcher for 20 stock takes about 2s，但是2000个还是要200s左右
+        System.out.println("Concurrent Time Cost(ms) for fetch: " + (System.currentTimeMillis() - startTime)); //concurrent data fetcher for 20 stock takes about 2s，但是2000个还是要200s左右
+//        startTime = System.currentTimeMillis();
+//        List<MarketDataMin> resultMin = result.stream()
+//                .map(MarketDataMin.class::cast)
+//                .collect(Collectors.toList());
+//        CompletableFuture.runAsync(() -> {
+//            repositoryService.saveAll(resultMin);
+//            System.out.println("Saving all to MySQL: " + resultMin);
+//        });
+//        System.out.println("Concurrent Time Cost(ms) for save: " + (System.currentTimeMillis() - startTime));
         return result;
     }
     @Autowired

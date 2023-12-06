@@ -31,27 +31,30 @@ public class WebSocketController {
     @Qualifier("minBeforeData")
     private MarketDataFetcher marketDataFetcherMinBefore;
     @MessageMapping("/stock")
-//    @SendTo("/topic/initialStockData")
     public void handleStockRequestInitialize(String stockSymbol) {
         System.out.println("Received stock code: " + stockSymbol);
+        try{
+            stockData = marketDataFetcherMinBefore.fetchAndProcessOne(stockSymbol);
+            if(stockData != null) {
+                messagingTemplate.convertAndSend("/topic/initialStockData/"+stockSymbol, stockData);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         String name = marketDataFetcherMinBefore.getName(stockSymbol);
-        subscriptionService.subscribe(stockSymbol);
-        stockData = marketDataFetcherMinBefore.fetchAndProcessOne(stockSymbol).subList(0, 20);
-        if(name != null) {
-            messagingTemplate.convertAndSend("/topic/initialStockName", name);
+        if (name != null) {
+            messagingTemplate.convertAndSend("/topic/initialStockName/"+stockSymbol, name);
+            if(name != "Stock Not Found, 检查输入股票号码") {
+                subscriptionService.subscribe(stockSymbol);
+            }
         }
-        if(stockData != null) {
-            messagingTemplate.convertAndSend("/topic/initialStockData", stockData);
-        }
-
-//        return stockData;
     }
 
-    @MessageMapping("/stock/unsubscribe")
-    @SendTo("/topic/unsubscribe")
-    public void unsubscribe(String stockSymbol) {
-        subscriptionService.unsubscribe(stockSymbol);
-    }
+//    @MessageMapping("/stock/unsubscribe")
+//    @SendTo("/topic/unsubscribe")
+//    public void unsubscribe(String stockSymbol) {
+//        subscriptionService.unsubscribe(stockSymbol);
+//    }
     public void sendInitialMarketDataToWebSocket(String stockSymbol, List<MarketData> mdList) {
         String targetDestination = "/topic/initialStockData/";
         messagingTemplate.convertAndSend(targetDestination, mdList);

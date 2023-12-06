@@ -1,0 +1,98 @@
+body {
+    margin: 8px 16px 8px 64px;
+    font-family: 'Arial', sans-serif;
+    background-color: aliceblue;
+
+}
+
+form {
+    margin-top: 16px;
+}
+
+#stockCodeInput {
+    padding: 8px;
+    width: 200px;
+    margin-right: 8px;
+}
+
+button {
+    padding: 8px;
+    background-color: #3498db;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #2980b9;
+}
+
+#output {
+    margin-top: 32px;
+    margin-right: 32px;
+    display: flex;
+    flex-direction: row;
+    justify-content: start;
+}
+
+h3 {
+    color: #e67e22;
+}
+
+p {
+    margin-bottom: 8px;
+}
+
+#stockChart {
+    margin-top: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#text_content {
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    align-content: center;
+    text-align: center;
+    margin-right: 64px;
+    color: #2ecc71;
+}
+#text_content h1 {
+    margin: 8px;
+    font-size:64px;
+}
+#text_content h2 {
+    margin: 8px;
+}
+.data_container {
+    display: flex;
+    justify-content: space-between;
+    max-width: 800px;
+    margin: 10px auto;
+    padding: 16px;
+    background-color: lightsteelblue;
+    border-radius: 8px;
+}
+
+.data_container p {
+    margin: 0; /* Remove default paragraph margin */
+    width: 30%; /* Set a fixed width for each paragraph */
+}
+
+#header{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    color: #3498db;
+}
+
+#up_down {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    font-size: 24px;
+}
